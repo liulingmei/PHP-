@@ -164,6 +164,11 @@ class Db {
         return false;
     }
 
+    // 获取mysqli链接
+    public function getHeadle(){
+        return $this->mysqli;
+    }
+
     // 查看是否工作
     public function isOK(){
         return !empty($this->mysqli);
@@ -171,6 +176,60 @@ class Db {
 
     public function selectDb($dbname){
         return $this->mysqli->select_db($dbname);
+    }
+    
+    // 开启事务
+    public function startTransaction(){
+
+        $sql = 'START TRANSACTION';
+        return $this->mysqli->query($sql);
+    }
+
+    // 回滚
+    public function rollback(){
+        return $this->mysqli->rollback();
+    }
+
+    // 提交事务
+    public function commit(){
+        return $this->mysqli->commit();
+    }
+
+    // check字符串
+    public function realEscapeString($string){
+        if($this->mysqli){
+            return false;
+        }
+        if(is_array($string) || is_array($string) || is_object($string)){
+            return false;
+        }else{
+            $string = "'". $this->mysqli->real_escape_string($string). "'";
+        }
+        return $string;
+
+    }
+
+    // 获取mysql错误代码
+    public function getErrno(){
+        if($this->mysqli){
+            return -1;
+        }
+        return $this->mysqli->error;
+    }
+
+    //获取mysql错误信息
+    public function getErrorMsg(){
+        if($this->mysqli){
+            return 'mysql server not available';
+        }else{
+            $host = $this->config['host'].':'.$this->config['port'];
+            return $host.' , '.$this->mysqli->error; 
+        }
+    }
+
+    //获取lastinsertid
+    public function getLastInsertID(){
+        return mysql_insert_id($this->mysqli);
     }
 
     public function insert(array $arrFields=array(), $table, $replace = false){
@@ -194,9 +253,154 @@ class Db {
                 $strValues .= ',';
             }
             $needComma = true;
-            $this->lastSql = '`'.$field.'`';
-            $strValues = $this->mysqli->real_escape_string
+            $this->lastSql .= '`'.$field.'`';
+            if(is_string($value)){
+                $strValues .= $this->mysqli->real_escape_string($value);
+            }else if(is_null($value) || is_array($value) || ){
+                continue;
+            }else{
+                $strValues .= "'$value'"; 
+            }
+            
+
+        }
+        $this->lastSql .= ') VALUES ('.$strValues.')';
+        
+        // log output sql
+        
+        $ret = $this->mysqli->query($this->lastSql);
+
+        if(!$ret) {
+            return false;
         }
 
+        return true;
     }
+    /**
+     * 拼接Upadte的sql
+     */
+    public function buildUpdateSqlStr($arrFields, $table) {
+        if(!$this->mysqli  || count($arrFields) < 0){
+            return false;
+        }
+
+        $this->lastSql = 'UPDATE ' .$table .' SET ';
+
+        $needComma = false;
+        foreach ($arrFields as $field => $value) {
+            
+            if(is_null($value) || is_object($value) || is_array($value)) {
+                continue;
+            }
+            if($needComma) {
+                $this->lastSql .= ' AND ';
+            }
+
+            $needComma = true;
+
+            $this->lastSql .= '`'.$field.'`' .'='. $this->mysqli->real_escape_string($value); 
+        }
+
+        return $this->lastSql;
+
+    }
+
+    /**
+     * 拼接insert sql
+     */
+
+    public function buildInsertSqlStr($arrFields, $table, $replace = false){
+
+        if($replace){
+            $this->lastSql = 'INSERT INTO '.$table . '(';
+        }else{
+            $this->lastSql = 'REPLACE INTO '.$table . '(';
+        }
+
+        $needComma = false;
+        $strValues = '';
+        foreach ($arrFields as $field => $value) {
+            if($needComma){
+                $this->lastSql .= ',';
+                $strValues .= ','; 
+            }
+            $needComma = true;
+            $this->lastSql .= '`'.$field.'`';
+            
+            if(is_string($value)){
+                $strValues .= "'".$this->mysqli->real_escape_string($value)."'";
+            }else if(is_array($value) || is_object($value) || is_null($value)){
+                continue;
+            }else{
+                $strValues .= "'$value'";
+            }
+            
+        }
+
+        $this->lastSql .= ' ) VALUES ( '.$strValues .')';
+        return $this->lastSql;
+    }
+
+    // 执行获取单条数据
+    public function queryFirstRow($strSql){
+        
+        if(!$this->mysqli){
+            return false;
+        }
+        $this->ping();
+
+        $obj = $this->mysqli->query($strSql);
+
+        if(!$obj){
+            return false;
+        }
+
+        $result = $obj->fetch_assoc();
+
+        if($result){
+            return $result;
+        }
+        return array();
+    }
+
+    // 执行获取多条数据
+    public function queryAllRows($strSql){
+
+        if(!$this->mysqli){
+            return false;
+        }
+
+        $this->ping();
+
+        $obj = $this->mysqli->query($strSql);
+
+        if(!$obj){
+            return false;
+        }
+        $result = array();
+        while($row=$obj->fetch_assoc()){
+            $result[] = $row; 
+        }
+
+        return $result;
+    }
+
+    //
+
+
+    // 执行mysql
+    public function doUpdateQuery($strSql){
+        if(!$this->mysqli){
+            return false;
+        }
+
+        $this->ping();
+
+        $this->lastSql = $strSql;
+
+        $result = $this->mysqli->query($this->lastSql);
+
+        return $result;
+    }
+
 }
