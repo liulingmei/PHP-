@@ -107,11 +107,11 @@ class Db {
         }
         $total_tries = 0;
         while($total_tries < $this->config['retry_times']){
-            if($mysqli->real_connect($config['host'],
-                                     $config['username'],
-                                     $config['password'],
+            if($mysqli->real_connect($this->config['host'],
+                                     $this->config['username'],
+                                     $this->config['password'],
                                      $this->dbname,
-                                     $config['port'])){
+                                     $this->config['port'])){
                 //  log
                 $total_tries++;
                 continue;
@@ -209,6 +209,11 @@ class Db {
 
     }
 
+    public function getSqlStr(){
+        return $this->lastSql;
+    }
+
+
     // 获取mysql错误代码
     public function getErrno(){
         if($this->mysqli){
@@ -255,8 +260,8 @@ class Db {
             $needComma = true;
             $this->lastSql .= '`'.$field.'`';
             if(is_string($value)){
-                $strValues .= $this->mysqli->real_escape_string($value);
-            }else if(is_null($value) || is_array($value) || ){
+                $strValues .= "'".$this->mysqli->real_escape_string($value)."'";
+            }else if(is_null($value) || is_array($value) || is_object($value)){
                 continue;
             }else{
                 $strValues .= "'$value'"; 
@@ -267,7 +272,6 @@ class Db {
         $this->lastSql .= ') VALUES ('.$strValues.')';
         
         // log output sql
-        
         $ret = $this->mysqli->query($this->lastSql);
 
         if(!$ret) {
@@ -298,7 +302,7 @@ class Db {
 
             $needComma = true;
 
-            $this->lastSql .= '`'.$field.'`' .'='. $this->mysqli->real_escape_string($value); 
+            $this->lastSql .= '`'.$field.'`' .' = '. "'".$this->mysqli->real_escape_string($value)."'"; 
         }
 
         return $this->lastSql;
@@ -311,7 +315,7 @@ class Db {
 
     public function buildInsertSqlStr($arrFields, $table, $replace = false){
 
-        if($replace){
+        if(!$replace){
             $this->lastSql = 'INSERT INTO '.$table . '(';
         }else{
             $this->lastSql = 'REPLACE INTO '.$table . '(';
@@ -371,7 +375,6 @@ class Db {
         }
 
         $this->ping();
-
         $obj = $this->mysqli->query($strSql);
 
         if(!$obj){
@@ -384,9 +387,6 @@ class Db {
 
         return $result;
     }
-
-    //
-
 
     // 执行mysql
     public function doUpdateQuery($strSql){
@@ -401,6 +401,46 @@ class Db {
         $result = $this->mysqli->query($this->lastSql);
 
         return $result;
+    }
+
+    public function buildSelectStr($arrFields,$table){
+        if(!$this->mysqli ||count($arrFields) < 0 ) {
+            return false;
+        }
+        $this->lastSql = 'SELECT * FROM ' . $table .' WHERE 1=1 ';
+
+
+        foreach ($arrFields as $field => $v) {
+            $this->lastSql .= $this->_strToWhere($field,$v);
+        }
+
+        return $this->lastSql;
+    }
+
+    protected function _strToWhere($field,$v){
+        $sqlStr = '';
+
+        // 规则
+        $symbolarr = array('>', '>=', '<', '<=','=',' !=', 'in','not in' ,'like','&');
+
+        if(is_array($v)){
+            if(in_array($v[0], $symbolarr)){
+                if($v[0] == 'like'){
+                    $sqlStr .= sprintf(' AND %s %s %%%s%%', $field, $v[0],$v[1]);
+                }else if($v[0] == 'in' || $v[0] == 'not in'){
+                    $sqlStr.= sprintf(' AND %s %s (%s)',$field, $v[0], $v[1]);
+                }else if($v[0]=='&'){
+                    $sqlStr .=sprintf(' AND %s %s %s=%s',$field, $v[0], $v[1], $v[1]);
+                }else{
+                    $sqlStr .= sprintf(' AND %s %s %s',$field, $v[0], $v[1]);
+                }
+            }
+
+        }else{
+            $sqlStr.= sprintf(' AND %s = \'%s\' ',$field,$v);
+        }
+
+    return $sqlStr;
     }
 
 }
