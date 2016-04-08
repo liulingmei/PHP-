@@ -29,6 +29,12 @@ class Db {
 
     }
 
+    public function __destruct(){
+        if($this->mysqli){
+            $this->mysqli->close();
+        }
+    }
+
     public static function getInstance($database) {
     	return self::_getInstance(__CLASS__, $database);
     }
@@ -38,14 +44,14 @@ class Db {
             // 自动化检测环境,让所有的事务都在一个集群中使用,保证所有的操作都在一个集群中    
             self::$database = $database;
             if(!isset(self::$instances[$klass]) || !self::$instances[$klass]->ping()){
-		self::$instance[$klass] = self::createInstance($klass,$database);
+		      self::$instance[$klass] = self::createInstance($klass,$database);
             }else {
                 if(isset(Dbconfig::$arrDbServer[$database])){
-		  $clusterInfo = DbConfig::$arrDbServer[$database];
-		}
+		            $clusterInfo = DbConfig::$arrDbServer[$database];
+		          }
                 if(is_array($clusterInfo)) {
-	          $index = array_rand($clusterInfo);
-                  $dbConfig = $clusterInfo[$index];
+	                $index = array_rand($clusterInfo);
+                    $dbConfig = $clusterInfo[$index];
                 }
                 self::$instances[$klass]->selectDb($dbConfig['db']);	
             }
@@ -93,7 +99,6 @@ class Db {
             return $this->mysqli;
         }
         $mysqli = mysqli_init();
-
         if(isset($this->config['connection_timeout'])) {
             $mysqli->options(
                     MYSQLI_OPT_CONNECT_TIMEOUT,
@@ -166,5 +171,32 @@ class Db {
 
     public function selectDb($dbname){
         return $this->mysqli->select_db($dbname);
+    }
+
+    public function insert(array $arrFields=array(), $table, $replace = false){
+        if(!$this->mysqli || count($arrFields) < 0 ) {
+            return false;
+        }
+
+        $this->ping();
+
+        if($replace){
+            $this->lastSql = 'REPLACE INTO '.$table.' ('; 
+        } else{
+            $this->lastSql = 'INSERT INTO '.$table.' (';
+        }
+
+        $strValue = '';
+        $needComma = false;
+        foreach ($arrFields as $field => $value) {
+            if ($needComma) {
+                $this->lastSql .= ',';
+                $strValues .= ',';
+            }
+            $needComma = true;
+            $this->lastSql = '`'.$field.'`';
+            $strValues = $this->mysqli->real_escape_string
+        }
+
     }
 }

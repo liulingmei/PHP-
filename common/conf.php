@@ -36,7 +36,7 @@ class DbConfig{
 		"Db_USER_W" => array(	
 			array(
 				'username' => 'root',
-				'password' => '12345',
+				'password' => '',
 				'port' => 3306,
 				'host' => '127.0.0.1',
 				'db' => 'test',
@@ -45,14 +45,14 @@ class DbConfig{
 		"Db_USER_R" => array(	
 			array(
 				'username' => 'root',
-				'password' => '12345',
+				'password' => '',
 				'port' => 3306,
 				'host' => '127.0.0.1',
 				'db' => 'test',
 			),
 			array(
 				'username' => 'root',
-				'password' => '12345',
+				'password' => '',
 				'port' => 3306,
 				'host' => '127.0.0.1',
 				'db' => 'test',
