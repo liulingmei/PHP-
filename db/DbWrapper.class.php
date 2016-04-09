@@ -3,7 +3,6 @@
  * @author:zhaobin
  * @brief :数据库包装类
  */
-require_once('DB.class.php');
 class DbWrapper extends Db{
 	
 	// 参考父类中的Db::getInstance
