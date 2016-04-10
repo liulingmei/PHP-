@@ -26,6 +26,7 @@ class DbWrapper extends Db{
 		$sqlStr .= $this->_querySelectLimit($page,$pagesize);
 		$ret = $this->queryAllRows($sqlStr);
 		if(!$ret){
+			//  $this->_getErrorMsg() 可以计入log 然后return false
 			return $this->_getErrorMsg();
 		}
 		return $ret;

@@ -11,7 +11,8 @@ define('APP_PATH',dirname(__FILE__).'/..');
 
 // 加载目录结构
 $appIncludePath = APP_PATH .'/db/'. PATH_SEPARATOR .
-				  APP_PATH .'/utils/'. PATH_SEPARATOR ;
+		    APP_PATH .'/module'.PATH_SEPARATOR.
+		    APP_PATH .'/utils/'. PATH_SEPARATOR ;
 
 ini_set('include_path', ini_get('include_path') . PATH_SEPARATOR . $appIncludePath);
 

@@ -6,14 +6,17 @@
 class UserDao {
 	private static $instance = NULL;
 	
+	private $tableName = 'user';
 	private function __clone(){}
 
 	// 防止实例化
-	private function __construct(){}
+	private function __construct(){
+	}
 
 	public function getInstance(){
 		if(!isset(self::$instance)){
-			self::$instance = new static;
+			$class = __CLASS__;
+			self::$instance = new $class;
 		}
 		return self::$instance;
 	}
@@ -26,21 +29,28 @@ class UserDao {
 	 */ 	
 	private function getDb($isMaster = false ,$hash = NULL){
 		$this->dbArr = TableService::getDbName($isMaster,$hash,'Db_USER');
-		$this->mysql = DbWrapper::instance($this->dbArr['db']);
+		$this->mysql = DbWrapper::getInstance($this->dbArr['db']);
 	}
 	/**
 	 * insert demo
-	 * 根据id分库
+	 * 根据id分库分表
 	 */
              public function insetCommon($id,$condition){
              	$arr = $this->getDb(true, $id);
-             	$strSql = $this->mysql->buildInsertSqlStr($condition,'user'.$arr['table_suffix']);
+             	$strSql = $this->mysql->buildInsertSqlStr($condition,$this->tableName.$arr['table_suffix']);
              	$res = $this->mysql->doUpdateQuery($strSql);
-             	if($res){
-             		return true;
-             	}else{
-             		$error = sprintf('Module[dbproxy]    errcode[%d]  errmsg[%s]  sql[%s]',$this->getErrno(),$this->getErrorMsg(),$this->getSqlStr());
-             		throw new Exception($error);
-             	}
+             	return $res;
+             }
+             // select 
+             public function select($condition,$page= 0,$pagesize=0,$sort=array('id',-1)){
+             	$arr = $this->getDb(false);
+             	$res =$this->mysql->querySelectAll($condition,$this->tableName,$sort,$page,$pagesize);
+             	return $res;
+             }
+             // update
+             public function update($condition){
+             	$arr = $this->getDb(true);
+             	$res = $this->mysql->queryUpdateById($condition,$this->tableName);
+             	return $res;
              }
 }
