@@ -175,3 +175,9 @@ class DbConfig{
 		),
 	);
 }
+function PublicLibAutoLoader($className){
+	$classFile = $className.'.class.php';
+	require_once($classFile);
+}
+// autoload
+spl_autoload_register('PublicLibAutoLoader');
