@@ -1,6 +1,15 @@
 <?php
+/**
+ * @author:zhaobin
+ * @brife:入口
+ */
+header('Content-Type: text/html; charset=UTF-8');
 require_once("./common/conf.php");
-$UserService = UserService::getInstance();
-$condition = ['id'=>1];
-$res = $UserService->selectUser($condition,1,1);
-var_dump($res);
+$app = new Application();
+$rootActionConfig = array(
+		'ActionController',
+		ActionControllerConfig::$config
+	);
+
+$app->setRootActionConfig($rootActionConfig);
+$app->execute(defined('IS_DEBUG') ? IS_DEBUG : false);

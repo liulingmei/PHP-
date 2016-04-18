@@ -93,4 +93,41 @@ class Utils{
 		}
 		return true;
 	}
+
+	// 获取用户ip地址
+
+	public static function getClientIP(){
+		if(isset($_SERVER['HTTP_CDN_SRC_IP'])) {
+			$ip     =   $_SERVER['HTTP_CDN_SRC_IP'];
+		} elseif (isset($_SERVER['HTTP_CLIENTIP'])) {
+			$ip     =   $_SERVER['HTTP_CLIENTIP'];
+		} elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+			$arr    =   explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+			$pos    =   array_search('unknown',$arr);
+			if(false !== $pos) unset($arr[$pos]);
+			$ip     =   trim($arr[0]);
+		} elseif (isset($_SERVER['HTTP_H_FORWARDED_FOR']) && !empty($_SERVER['HTTP_H_FORWARDED_FOR'])) {
+			$arr    =   explode(',', $_SERVER['HTTP_H_FORWARDED_FOR']);
+			$pos    =   array_search('unknown',$arr);
+			if(false !== $pos) unset($arr[$pos]);
+			$ip     =   trim($arr[0]);
+		}elseif (isset($_SERVER['REMOTE_ADDR'])) {
+			$ip     =   $_SERVER['REMOTE_ADDR'];
+		}
+		return $ip;	
+	}
+
+	// 创建文件夹 
+	public static function mkdirs($dir){
+		if(is_dir($dir)){
+			return true;
+		}
+		$parent = dirname($dir);
+
+		if(is_dir($parent) || Utils::mkdirs($parent)){
+			return @mkdir($dir, 0777);
+		}
+
+		return false;
+	}
 }

@@ -4,15 +4,29 @@
  */
 
 // 是否开启debug
+
 define('IS_DEBUG',true);
+
+// 应用名称
+define('APP_NAME','test');
 
 // 当前目录的上一层目录
 define('APP_PATH',dirname(__FILE__).'/..');
 
+// PHPlib
+define('PUBLIC_PATH',APP_PATH.'/phplib');
+
+// 定义日志类型
+define('LOG_TYPE', 'LOCAL_LOG');
+
+// 定义错误级别 可以参照CLog类
+define('LOG_LEVEL', 0x15);
+
 // 加载目录结构
-$appIncludePath = APP_PATH .'/db/'. PATH_SEPARATOR .
-		    APP_PATH .'/module'.PATH_SEPARATOR.
-		    APP_PATH .'/utils/'. PATH_SEPARATOR ;
+$appIncludePath = APP_PATH .'/db/'.      PATH_SEPARATOR .
+		    	  APP_PATH .'/module'.   PATH_SEPARATOR.
+		    	  APP_PATH .'/utils/'.   PATH_SEPARATOR.
+		     	  APP_PATH . '/action/'. PATH_SEPARATOR;
 
 ini_set('include_path', ini_get('include_path') . PATH_SEPARATOR . $appIncludePath);
 
@@ -28,6 +42,41 @@ error_reporting(E_ALL & ~E_STRICT & ~E_NOTICE);
 class CommonConst{
 	const ENVIRONMENT = 'DEV';
 }
+
+// 路由URI
+
+class ActionControllerConfig{
+	public static $config =array(
+	'hash_mapping' => array(
+		'/test'        => array('Test_ActionIndex'),		    // test
+	),
+	'prefix_mapping'=>array(
+		'/user-dd'=>array(
+			'TestAction'
+		),
+		'/statistics-task'=> array(
+				'Statistics_ScriptTaskAction'
+		)
+	),
+	'regex_mapping'=>array(
+		"/\/q-([0-9]+).html/"=>array(
+				'TestAction'
+			),
+		),
+	);
+
+}
+
+// 日志
+
+$GLOBALS['LOG'] = array(
+	'appname'       => APP_NAME,
+	'type'		=> LOG_TYPE,
+	'level'		=> LOG_LEVEL,
+	'path'		=> (LOG_TYPE == 'LOCAL_LOG') ? APP_PATH .'/log' : 'log',
+	'filename'	=> 'test.log.'.date("YmdH"),
+);
+
 
 // 数据库
 class DbConfig{
@@ -175,9 +224,45 @@ class DbConfig{
 		),
 	);
 }
+
+class PublicLibManager{
+	private $ClassArr;
+	private static $instance = NULL;
+
+	public function getInstance(){
+		if(!isset(self::$instance)){
+			self::$instance = new static;
+		}
+		return self::$instance;
+	}
+
+	protected function __construct(){
+		$this->ClassArr = array(
+			'Application' 		=> PUBLIC_PATH .'/framework/Application.class.php',
+			'Context'     		=> PUBLIC_PATH .'/framework/Context.class.php',
+			'Action'      		=> PUBLIC_PATH .'/framework/Action.class.php',
+			'ActionController'  => PUBLIC_PATH .'/framework/ActionController.class.php',
+
+			'CLog'              => PUBLIC_PATH .'/log/CLog.class',
+			);
+	}
+
+	public function getPublicClassNames(){
+		return $this->ClassArr;
+	}
+}
+
 function PublicLibAutoLoader($className){
-	$classFile = $className.'.class.php';
-	require_once($classFile);
+
+	$PublicClass = PublicLibManager::getInstance();
+	$arrPulbicClassName = $PublicClass->getPublicClassNames();
+	if(array_key_exists($className, $arrPulbicClassName)){
+		require_once($arrPulbicClassName[$className]);
+	}else{
+		$classFile = $className.'.class.php';
+		require_once($classFile);
+	}
+
 }
 // autoload
 spl_autoload_register('PublicLibAutoLoader');
