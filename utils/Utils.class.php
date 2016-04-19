@@ -54,7 +54,7 @@ class Utils{
 		return true;
 	}
 
-	public static function check_string(value, $max_len = NULL, $min_len = 1){
+	public static function check_string($value, $max_len = NULL, $min_len = 1){
 		if(is_null($value)){
 			return false;
 		}
