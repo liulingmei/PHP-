@@ -1,4 +1,6 @@
- xction<br />
+一个简单的PHP框架<br />
+框架架构图:<br />
+action<br />
 │   ├── pc<br />
 │   │   └── Test_ActionIndex.class.php<br />
 │   └── WebBaseAction.class.php<br />
@@ -235,8 +237,4 @@
     ├── TableService.class.php<br />
     └── Utils.class.php<br />
 <br />
-
-extension=/usr/lib/php5/20121212/json.so
- xtension=/usr/lib/php5/20121212/json.so
-extension=/usr/lib/php5/20121212/json.so
 
