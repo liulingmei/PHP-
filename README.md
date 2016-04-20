@@ -35,9 +35,9 @@ action  控制器<br />
 │   │   └── CLog.class.php<br />
 │   └── smarty 模板类<br />
 ├── README.md<br />
-└── utils<br />
-    ├── ResourceFactory.class.php<br />
-    ├── TableService.class.php<br />
-    └── Utils.class.php<br />
+└── utils 系统方法<br />
+    ├── ResourceFactory.class.php Smarty工厂类<br />
+    ├── TableService.class.php 分表分库方法<br />
+    └── Utils.class.php 常用方法<br />
 <br />
 
